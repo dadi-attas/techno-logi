@@ -1,0 +1,842 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>טכנו-לוגי?</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;600;700;900&display=swap');
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --orange:       #FF6B00;
+      --orange-light: #FF8C00;
+      --yellow:       #FFD700;
+      --dark-bg:      #0D0D0D;
+      --dark-card:    #1A1A1A;
+      --dark-border:  #2A2A2A;
+      --text-main:    #F5F5F5;
+      --text-muted:   #888;
+    }
+
+    body {
+      font-family: 'Heebo', 'Arial Hebrew', Arial, sans-serif;
+      direction: rtl;
+      background-color: var(--dark-bg);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px 16px;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    /* ── Background icons ── */
+    .bg-icons { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
+    .bg-icon {
+      position: absolute; opacity: 0.06;
+      animation: float 8s ease-in-out infinite; user-select: none;
+    }
+    @keyframes float {
+      0%,100% { transform: translateY(0) rotate(0deg); }
+      50%      { transform: translateY(-14px) rotate(7deg); }
+    }
+
+    /* ── Card ── */
+    .card {
+      position: relative; z-index: 1;
+      background: var(--dark-card);
+      border: 1px solid var(--dark-border);
+      border-radius: 20px;
+      padding: clamp(28px,6vw,52px) clamp(22px,6vw,46px);
+      max-width: 540px; width: 100%;
+      box-shadow: 0 8px 40px rgba(255,107,0,0.15), 0 2px 8px rgba(0,0,0,0.6);
+    }
+
+    /* ── Screens ── */
+    .screen { display: none; }
+    .screen.active { display: block; }
+
+    /* ── Shared header ── */
+    .header { text-align: center; margin-bottom: 24px; }
+    .badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: rgba(255,107,0,0.15); border: 1px solid rgba(255,107,0,0.35);
+      border-radius: 999px; padding: 4px 14px;
+      font-size: 12px; color: var(--orange-light); letter-spacing: 0.04em; margin-bottom: 12px;
+    }
+    h1 {
+      font-size: clamp(36px,10vw,62px); font-weight: 900; line-height: 1.1;
+      background: linear-gradient(135deg, var(--orange) 0%, var(--yellow) 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text; margin-bottom: 4px; letter-spacing: -1px;
+    }
+    .subtitle {
+      font-size: clamp(13px,3.5vw,17px); font-weight: 600;
+      color: var(--yellow); letter-spacing: 0.05em; margin-bottom: 14px;
+    }
+    .vs-divider {
+      display: flex; align-items: center; gap: 10px;
+      justify-content: center; color: var(--text-muted); font-size: 13px; margin-bottom: 18px;
+    }
+    .vs-divider::before { content:''; flex:1; height:1px; background: linear-gradient(to left,transparent,var(--dark-border)); }
+    .vs-divider::after  { content:''; flex:1; height:1px; background: linear-gradient(to right,transparent,var(--dark-border)); }
+    .disclaimer {
+      background: rgba(255,215,0,0.07); border: 1px solid rgba(255,215,0,0.2);
+      border-radius: 10px; padding: 10px 14px;
+      font-size: 13px; color: #BFAE60; line-height: 1.5; text-align: center;
+    }
+
+    /* ── Intro form ── */
+    .fields { display: flex; flex-direction: column; gap: 20px; margin-top: 26px; }
+    .field-group { display: flex; flex-direction: column; gap: 8px; }
+    .field-label { display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 600; color: var(--text-main); }
+    .field-label .icon { font-size: 18px; }
+
+    input[type="number"] {
+      width: 100%; background: rgba(255,255,255,0.04);
+      border: 1px solid var(--dark-border); border-radius: 12px;
+      padding: 13px 16px; font-family: inherit; font-size: 16px;
+      font-weight: 600; color: var(--text-main); direction: rtl;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      appearance: textfield; -moz-appearance: textfield;
+    }
+    input[type="number"]::-webkit-outer-spin-button,
+    input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; }
+    input[type="number"]::placeholder { color: var(--text-muted); font-weight: 400; }
+    input[type="number"]:focus { outline: none; border-color: var(--orange); box-shadow: 0 0 0 3px rgba(255,107,0,0.15); }
+
+    .gender-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .gender-btn {
+      background: rgba(255,255,255,0.04); border: 1.5px solid var(--dark-border); border-radius: 12px;
+      padding: 14px 10px; font-family: inherit; font-size: 15px; font-weight: 700;
+      color: var(--text-muted); cursor: pointer;
+      display: flex; flex-direction: column; align-items: center; gap: 6px; transition: all 0.18s ease;
+    }
+    .gender-btn .g-icon { font-size: 26px; }
+    .gender-btn:hover { border-color: var(--orange); color: var(--orange-light); background: rgba(255,107,0,0.07); }
+    .gender-btn.active { border-color: var(--orange); background: rgba(255,107,0,0.15); color: var(--orange-light); box-shadow: 0 0 0 3px rgba(255,107,0,0.12); }
+    .gender-btn.active .g-icon { filter: drop-shadow(0 0 6px var(--orange)); }
+
+    /* ── Buttons ── */
+    .btn-primary {
+      width: 100%; padding: 14px; border: none; border-radius: 12px;
+      font-family: inherit; font-size: 16px; font-weight: 700; cursor: pointer;
+      background: linear-gradient(135deg, var(--orange), var(--yellow));
+      color: #111; transition: opacity 0.18s, transform 0.18s;
+    }
+    .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+    .btn-primary:active { transform: scale(0.98); }
+    .btn-primary:disabled { opacity: 0.35; cursor: not-allowed; transform: none; }
+
+    .reset-btn {
+      width: 100%; background: transparent; border: 1.5px solid var(--dark-border); border-radius: 12px;
+      padding: 11px; font-family: inherit; font-size: 14px; font-weight: 600;
+      color: var(--text-muted); cursor: pointer;
+      display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.18s ease;
+    }
+    .reset-btn:hover { border-color: #555; color: var(--text-main); background: rgba(255,255,255,0.04); }
+    .reset-btn:active { transform: scale(0.98); }
+
+    /* ── Progress bar ── */
+    .progress-wrap { margin-bottom: 22px; }
+    .progress-meta { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-muted); margin-bottom: 8px; }
+    .progress-track { height: 6px; background: var(--dark-border); border-radius: 999px; overflow: hidden; }
+    .progress-fill { height: 100%; background: linear-gradient(90deg, var(--orange), var(--yellow)); border-radius: 999px; transition: width 0.4s ease; }
+
+    /* ── Quiz question ── */
+    .q-icon { font-size: 38px; text-align: center; margin-bottom: 12px; }
+    .q-text { font-size: clamp(15px,4vw,18px); font-weight: 700; line-height: 1.5; text-align: center; margin-bottom: 22px; }
+
+    .options { display: flex; flex-direction: column; gap: 10px; }
+    .option-btn {
+      background: rgba(255,255,255,0.04); border: 1.5px solid var(--dark-border); border-radius: 12px;
+      padding: 13px 16px; font-family: inherit; font-size: 14px; font-weight: 500;
+      color: var(--text-main); text-align: right; cursor: pointer;
+      display: flex; align-items: center; gap: 12px; transition: all 0.18s ease; line-height: 1.4;
+    }
+    .option-btn .opt-score {
+      flex-shrink: 0; width: 28px; height: 28px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px; background: var(--dark-border); color: var(--text-muted); transition: all 0.18s ease;
+    }
+    .option-btn:hover { border-color: var(--orange); background: rgba(255,107,0,0.07); }
+    .option-btn:hover .opt-score { background: var(--orange); color: #fff; }
+    .option-btn.selected { border-color: var(--orange); background: rgba(255,107,0,0.14); }
+    .option-btn.selected[data-s="1"] .opt-score { background: #4CAF50; color: #fff; }
+    .option-btn.selected[data-s="2"] .opt-score { background: #8BC34A; color: #111; }
+    .option-btn.selected[data-s="3"] .opt-score { background: var(--orange-light); color: #111; }
+    .option-btn.selected[data-s="4"] .opt-score { background: var(--yellow); color: #111; }
+
+    .nav-row { display: flex; gap: 10px; margin-top: 20px; align-items: center; }
+    .btn-back {
+      flex-shrink: 0; background: transparent; border: 1.5px solid var(--dark-border); border-radius: 10px;
+      padding: 10px 16px; font-family: inherit; font-size: 14px; font-weight: 600;
+      color: var(--text-muted); cursor: pointer; transition: all 0.18s ease;
+    }
+    .btn-back:hover { border-color: #555; color: var(--text-main); background: rgba(255,255,255,0.04); }
+    .btn-next {
+      flex: 1; padding: 12px; border: none; border-radius: 10px;
+      font-family: inherit; font-size: 15px; font-weight: 700; cursor: pointer;
+      background: linear-gradient(135deg,var(--orange),var(--yellow));
+      color: #111; transition: opacity 0.18s, transform 0.18s;
+    }
+    .btn-next:disabled { opacity: 0.3; cursor: not-allowed; }
+    .btn-next:not(:disabled):hover { opacity: 0.9; transform: translateY(-1px); }
+
+    /* ── Live spectrum (quiz screen) ── */
+    .spectrum-wrap { margin-top: 18px; }
+    .spectrum-labels { display: flex; justify-content: space-between; font-size: 11px; color: var(--text-muted); margin-bottom: 5px; }
+    .spectrum-track {
+      height: 8px; border-radius: 999px; overflow: hidden;
+      background: linear-gradient(90deg, var(--orange) 0%, var(--yellow) 50%, #4CAF50 100%);
+      position: relative;
+    }
+    .spectrum-thumb {
+      position: absolute; top: 50%; transform: translate(-50%,-50%);
+      width: 14px; height: 14px; border-radius: 50%;
+      background: #fff; border: 2px solid var(--dark-bg);
+      box-shadow: 0 0 6px rgba(255,107,0,0.6);
+      transition: left 0.5s cubic-bezier(.4,0,.2,1);
+    }
+
+    /* ════════════════════════════════
+       RESULTS SCREEN
+    ════════════════════════════════ */
+
+    /* Hero */
+    .result-hero { text-align: center; margin-bottom: 20px; }
+
+    .result-emoji {
+      font-size: 78px; line-height: 1; display: block; margin-bottom: 12px;
+      animation: bounceIn 0.7s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
+    }
+    @keyframes bounceIn {
+      0%   { transform: scale(0) rotate(-10deg); opacity: 0; }
+      60%  { transform: scale(1.2) rotate(3deg); }
+      100% { transform: scale(1) rotate(0deg); opacity: 1; }
+    }
+
+    .result-title {
+      font-size: clamp(22px,6vw,30px); font-weight: 900; margin-bottom: 6px;
+    }
+
+    .result-tagline {
+      font-size: 14px; color: var(--text-muted); font-weight: 500;
+    }
+
+    /* Score row */
+    .score-row {
+      display: flex; align-items: flex-end; justify-content: center;
+      gap: 4px; margin: 18px 0 4px;
+    }
+    .score-num {
+      font-size: 58px; font-weight: 900; line-height: 1;
+      background: linear-gradient(135deg, var(--orange), var(--yellow));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+    .score-denom {
+      font-size: 20px; font-weight: 700; color: var(--text-muted);
+      padding-bottom: 10px;
+    }
+    .score-label {
+      text-align: center; font-size: 12px; color: var(--text-muted);
+      margin-bottom: 20px; letter-spacing: 0.04em;
+    }
+
+    /* Big spectrum */
+    .res-spectrum { margin-bottom: 22px; }
+    .res-spec-labels {
+      display: flex; justify-content: space-between; align-items: center;
+      font-size: 12px; color: var(--text-muted); margin-bottom: 8px;
+    }
+    .res-spec-pct { font-weight: 700; font-size: 14px; color: var(--yellow); }
+    .res-spec-track {
+      height: 12px; border-radius: 999px;
+      background: linear-gradient(90deg, var(--orange) 0%, var(--yellow) 50%, #4CAF50 100%);
+      position: relative; overflow: visible;
+    }
+    .res-spec-fill { display: none; }
+    .res-spec-thumb {
+      position: absolute; top: 50%; left: 100%;
+      transform: translate(-50%,-50%);
+      width: 22px; height: 22px; border-radius: 50%;
+      background: #fff; border: 3px solid var(--dark-bg);
+      box-shadow: 0 0 12px rgba(255,107,0,0.8);
+      transition: left 1.3s cubic-bezier(0.4,0,0.2,1);
+    }
+
+    /* Description */
+    .result-desc-box {
+      background: rgba(255,255,255,0.03); border: 1px solid var(--dark-border);
+      border-radius: 12px; padding: 14px 16px;
+      font-size: 14px; line-height: 1.75; color: #CCC;
+      margin-bottom: 14px;
+    }
+
+    /* Personal chip */
+    .personal-chip {
+      background: rgba(255,215,0,0.07); border: 1px solid rgba(255,215,0,0.25);
+      border-radius: 10px; padding: 10px 14px;
+      font-size: 13px; color: #BFAE60; text-align: center; line-height: 1.5;
+      margin-bottom: 20px;
+    }
+
+    /* Breakdown */
+    .breakdown-section { margin-top: 6px; }
+    .breakdown-label {
+      font-size: 11px; font-weight: 600; color: var(--text-muted);
+      text-align: center; letter-spacing: 0.07em; text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+    .breakdown-grid {
+      display: grid; grid-template-columns: repeat(5,1fr); gap: 8px;
+    }
+    .bd-cell {
+      display: flex; flex-direction: column; align-items: center; gap: 5px;
+      background: rgba(255,255,255,0.03); border: 1.5px solid var(--dark-border);
+      border-radius: 10px; padding: 9px 4px;
+    }
+    .bd-icon { font-size: 19px; line-height: 1; }
+    .bd-score {
+      width: 22px; height: 22px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 10px; font-weight: 700;
+    }
+    .bd-score[data-s="1"] { background: #4CAF50; color: #fff; }
+    .bd-score[data-s="2"] { background: #8BC34A; color: #111; }
+    .bd-score[data-s="3"] { background: #FF8C00; color: #111; }
+    .bd-score[data-s="4"] { background: #FFD700; color: #111; }
+
+    /* Score legend */
+    .legend {
+      display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;
+      margin-top: 10px; margin-bottom: 20px;
+    }
+    .legend-item {
+      display: flex; align-items: center; gap: 5px;
+      font-size: 11px; color: var(--text-muted);
+    }
+    .legend-dot {
+      width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
+    }
+
+    /* Divider */
+    .section-divider {
+      height: 1px; background: var(--dark-border); margin: 22px 0;
+    }
+
+    /* ── Result actions ── */
+    .result-actions {
+      display: flex; flex-direction: column; gap: 10px; margin-top: 18px;
+    }
+    .btn-whatsapp {
+      width: 100%; padding: 14px; border: none; border-radius: 12px;
+      font-family: inherit; font-size: 16px; font-weight: 700; cursor: pointer;
+      background: #25D366; color: #fff;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      transition: opacity 0.18s, transform 0.18s;
+    }
+    .btn-whatsapp:hover { opacity: 0.9; transform: translateY(-1px); }
+    .btn-whatsapp:active { transform: scale(0.98); }
+    .reset-btn.wide { width: 100%; }
+
+    /* ── Footer ── */
+    .footer { margin-top: 28px; text-align: center; font-size: 12px; color: #444; position: relative; z-index: 1; }
+  </style>
+</head>
+<body>
+
+  <div class="bg-icons" id="bgIcons"></div>
+
+  <div class="card">
+
+    <!-- ════════ SCREEN 1 — Intro ════════ -->
+    <div class="screen active" id="screenIntro">
+      <div class="header">
+        <div class="badge">⚡ שאלון טכנולוגי</div>
+        <h1>טכנו-לוגי?</h1>
+        <div class="subtitle">אנלוגי vs דיגיטלי</div>
+        <div class="vs-divider">⚙️</div>
+        <div class="disclaimer">זהו שאלון הומוריסטי בלבד, אם כי בכל צחוק יש גרעין אמת 😉</div>
+      </div>
+
+      <div class="fields">
+        <div class="field-group">
+          <div class="field-label"><span class="icon">🎂</span> גיל</div>
+          <input type="number" id="ageInput" min="1" max="120" placeholder="הכנס גיל..." />
+        </div>
+        <div class="field-group">
+          <div class="field-label"><span class="icon">👤</span> מגדר</div>
+          <div class="gender-buttons">
+            <button class="gender-btn" id="btnMale"   onclick="selectGender('male')"><span class="g-icon">♂️</span> זכר</button>
+            <button class="gender-btn" id="btnFemale" onclick="selectGender('female')"><span class="g-icon">♀️</span> נקבה</button>
+          </div>
+        </div>
+        <button class="btn-primary" onclick="startQuiz()">בואו נגלה מי אתה 🚀</button>
+      </div>
+    </div>
+
+    <!-- ════════ SCREEN 2 — Quiz ════════ -->
+    <div class="screen" id="screenQuiz">
+      <div class="progress-wrap">
+        <div class="progress-meta">
+          <span id="qCounter">שאלה 1 מתוך 10</span>
+          <span id="qPct">0%</span>
+        </div>
+        <div class="progress-track">
+          <div class="progress-fill" id="progressFill" style="width:0%"></div>
+        </div>
+      </div>
+
+      <div class="q-icon" id="qIcon">⏰</div>
+      <div class="q-text" id="qText"></div>
+      <div class="options" id="optionsWrap"></div>
+
+      <div class="spectrum-wrap">
+        <div class="spectrum-labels"><span>📻 אנלוגי</span><span>🤖 דיגיטלי</span></div>
+        <div class="spectrum-track">
+          <div class="spectrum-thumb" id="specThumb" style="left:50%"></div>
+        </div>
+      </div>
+
+      <div class="nav-row">
+        <button class="btn-back" id="btnBack" onclick="prevQuestion()">← חזור</button>
+        <button class="btn-next" id="btnNext" disabled onclick="nextQuestion()">המשך →</button>
+      </div>
+    </div>
+
+    <!-- ════════ SCREEN 3 — Results ════════ -->
+    <div class="screen" id="screenResult">
+
+      <div class="result-hero">
+        <span class="result-emoji" id="resEmoji">🤖</span>
+        <div class="result-title" id="resTitle" style="color: var(--yellow)"></div>
+        <div class="result-tagline" id="resTagline"></div>
+      </div>
+
+      <div class="score-row">
+        <div class="score-num" id="scoreDisplay">0</div>
+        <div class="score-denom">/40</div>
+      </div>
+      <div class="score-label">ניקוד סופי</div>
+
+      <div class="res-spectrum">
+        <div class="res-spec-labels">
+          <span>📻 אנלוגי</span>
+          <span class="res-spec-pct" id="resPctLabel">50%</span>
+          <span>🤖 דיגיטלי</span>
+        </div>
+        <div class="res-spec-track">
+          <div class="res-spec-fill" id="resSpecFill"></div>
+          <div class="res-spec-thumb" id="resSpecThumb"></div>
+        </div>
+      </div>
+
+      <div class="result-desc-box" id="resDesc"></div>
+      <div class="personal-chip" id="resPersonal" style="display:none"></div>
+
+      <div class="section-divider"></div>
+
+      <div class="breakdown-section">
+        <div class="breakdown-label">פירוט לפי נושא</div>
+        <div class="breakdown-grid" id="breakdownGrid"></div>
+        <div class="legend">
+          <div class="legend-item"><div class="legend-dot" style="background:#4CAF50"></div>אנלוגי מושלם</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#8BC34A"></div>נוטה לאנלוגי</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#FF8C00"></div>נוטה לדיגיטלי</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#FFD700"></div>דיגיטלי מלא</div>
+        </div>
+      </div>
+
+      <div class="result-actions">
+        <button class="btn-whatsapp" onclick="shareWhatsApp()">📲 שתף בוואטסאפ</button>
+        <button class="reset-btn wide" onclick="resetAll()">🔄 איפוס והתחלה מחדש</button>
+      </div>
+
+    </div>
+
+  </div>
+
+  <div class="footer">טכנו-לוגי? © 2025</div>
+
+  <script>
+    // ════ QUESTIONS ════
+    const QUESTIONS = [
+      {
+        icon: '⏰',
+        text: 'הבוקר מתחיל — השעון מצלצל. מה השלב הראשון שלך?',
+        options: [
+          { text: 'קם ישר, שעון מכאני על השידה — לא צריך יותר מזה', score: 1 },
+          { text: 'לוחץ snooze בשעון המעורר הדיגיטלי שלוש פעמים', score: 2 },
+          { text: 'מכבה התראה בטלפון ועובר ישר לבדוק וואטסאפ', score: 3 },
+          { text: 'אפליקציה ניתחה את שנתי ואלקסה מסכמת לי את היום', score: 4 },
+        ]
+      },
+      {
+        icon: '🗺️',
+        text: 'צריך להגיע לכתובת לא מוכרת — מה הפתרון?',
+        options: [
+          { text: 'שואל אנשים ברחוב, זה רומנטי ואף פעם לא בדק', score: 1 },
+          { text: 'מוציא מפה נייר מהתא — זאת מפה מ-2003, אבל עובד', score: 2 },
+          { text: 'גוגל מפות, תמיד ובכל מקום', score: 3 },
+          { text: 'וייז קולי + AI שמציע לי גם לאן לאכול בדרך', score: 4 },
+        ]
+      },
+      {
+        icon: '📖',
+        text: 'ערב פנוי, מרגישים לקרוא. מה אתם קוראים?',
+        options: [
+          { text: 'ספר פיזי, עדיף עם ריח קצת עובש מהספרייה', score: 1 },
+          { text: 'ספר פיזי בעיקר, לפעמים קינדל כשנוח', score: 2 },
+          { text: 'קינדל או אפליקציית ספרים בטלפון', score: 3 },
+          { text: 'סיכום YouTube + פודקאסט + GPT מסביר בשפה פשוטה', score: 4 },
+        ]
+      },
+      {
+        icon: '📸',
+        text: 'רגע יפה שרוצים לזכור — איך מתעדים?',
+        options: [
+          { text: 'מצלמת פילם, מדפיסים ומדביקים באלבום בבית', score: 1 },
+          { text: 'מצלמה דיגיטלית נפרדת, מעבירים למחשב', score: 2 },
+          { text: 'סמארטפון, ישר לגוגל פוטוס ושכחנו', score: 3 },
+          { text: 'מצלם, AI מוסיף פילטר, עורך Reels ומשתף בכל פלטפורמה', score: 4 },
+        ]
+      },
+      {
+        icon: '🎵',
+        text: 'מה שומעים כשנוסעים ברכב?',
+        options: [
+          { text: 'קסטות / CD / תקליטים — הצליל אחר לגמרי', score: 1 },
+          { text: 'רדיו ישראלי, מה שיבוא', score: 2 },
+          { text: 'ספוטיפיי / אפל מיוזיק פלייליסט מוכן', score: 3 },
+          { text: 'AI שמייצר פלייליסט לפי מצב הרוח ומהירות הנהיגה', score: 4 },
+        ]
+      },
+      {
+        icon: '📅',
+        text: 'ניהול פגישות ומשימות — איך עובד אצלך?',
+        options: [
+          { text: 'יומן נייר ועט, תמיד עמי ותמיד עובד', score: 1 },
+          { text: 'יומן נייר + תזכורת בטלפון לבטיחות', score: 2 },
+          { text: 'גוגל קאלנדר + תזכורות בסמארטפון', score: 3 },
+          { text: 'AI מנהל הכל, מסנכרן בין מכשירים ומתאם אוטומטי', score: 4 },
+        ]
+      },
+      {
+        icon: '💳',
+        text: 'בקופה — איך משלמים?',
+        options: [
+          { text: 'מזומן בלבד — כסף פיזי זה כסף אמיתי', score: 1 },
+          { text: 'מזומן בעיקר, לפעמים כרטיס אם אין ברירה', score: 2 },
+          { text: 'כרטיס אשראי תמיד, מזומן בקושי נוגעים', score: 3 },
+          { text: 'Apple Pay / Google Pay, לפעמים מהשעון הרחיפני', score: 4 },
+        ]
+      },
+      {
+        icon: '✍️',
+        text: 'צריך לרשום משהו חשוב — מה עושים?',
+        options: [
+          { text: 'מחברת ועט, תמיד בתיק, אף פעם לא נגמרת הסוללה', score: 1 },
+          { text: 'פתק דביק על המקרר, כבר הוכח כאפקטיבי', score: 2 },
+          { text: 'Notes בטלפון / Google Keep, מסונכרן לכל מקום', score: 3 },
+          { text: 'מכתיב לסירי, GPT מארגן ומסנכרן לכל מכשיר', score: 4 },
+        ]
+      },
+      {
+        icon: '👥',
+        text: 'שמירת קשר עם חברים — איך אצלך?',
+        options: [
+          { text: 'פגישות פנים אל פנים בלבד, עדיף עם קפה ועוגה', score: 1 },
+          { text: 'שיחות טלפון ארוכות, כמו שצריך', score: 2 },
+          { text: 'וואטסאפ קבוצתי — אפשר גם שלא לענות שלושה ימים', score: 3 },
+          { text: 'אינסטגרם, טיקטוק, סנאפצ\'ט — בכל פלטפורמה בו-זמנית', score: 4 },
+        ]
+      },
+      {
+        icon: '🛒',
+        text: 'צריך לקנות מוצר חדש — מה התהליך?',
+        options: [
+          { text: 'הולך לחנות, שואל את המוכר, בוחר ביד ומריח', score: 1 },
+          { text: 'מחפש בזאפ/יד2, קונה בחנות פיזית', score: 2 },
+          { text: 'Amazon / KSP / AliExpress — מחפש ביקורות שעה', score: 3 },
+          { text: 'AI ממליץ, מזמין אוטומטי, הגיע מחר עם אריזה ממוחזרת', score: 4 },
+        ]
+      },
+    ];
+
+    // ════ PROFILES ════
+    const PROFILES = [
+      {
+        range: [10, 17],
+        emoji: '🦕',
+        title: 'דינוזאור דיגיטלי',
+        tagline: 'אנלוגי עד השד בעצמות',
+        color: '#4CAF50',
+        desc: {
+          male:   'מי אמר שצריך אינטרנט כדי לחיות טוב? אתה מאמין שהדברים הטובים ביותר בחיים לא צריכים סוללה. יומן נייר, ספר אמיתי, קפה עם חברים — זה לא עצלות טכנולוגית, זה עקרון. בסוף תתברר שהיית צודק.',
+          female: 'מי אמרה שצריך אינטרנט כדי לחיות טוב? את מאמינה שהדברים הטובים ביותר בחיים לא צריכים סוללה. יומן נייר, ספר אמיתי, קפה עם חברות — זה לא עצלות טכנולוגית, זה עקרון. בסוף תתברר שהיית צודקת.',
+        }
+      },
+      {
+        range: [18, 24],
+        emoji: '📻',
+        title: 'וינטאג׳ מאוזן',
+        tagline: 'רגל אחת בעבר, רגל אחת בהווה',
+        color: '#8BC34A',
+        desc: {
+          male:   'אתה יודע להשתמש בטכנולוגיה כשצריך, אבל לא מאבד שינה אם הסוללה מתה. יחס בריא לכלים הדיגיטליים — הם עובדים בשבילך, לא להיפך. חיים מאוזנים ומדודים, בדיוק כמו שצריך.',
+          female: 'את יודעת להשתמש בטכנולוגיה כשצריך, אבל לא מאבדת שינה אם הסוללה מתה. יחס בריא לכלים הדיגיטליים — הם עובדים בשבילך, לא להיפך. חיים מאוזנים ומדודים, בדיוק כמו שצריך.',
+        }
+      },
+      {
+        range: [25, 31],
+        emoji: '💻',
+        title: 'דיגיטלי בנוח',
+        tagline: 'טכנולוגיה היא חלק מהחיים',
+        color: '#FF8C00',
+        desc: {
+          male:   'הסמארטפון הוא כמו יד ימין שלך. אתה מסתדר מעולה עם כלים דיגיטליים, וחיי היומיום שלך כבר מסונכרנים לענן. רק אל תשכח לפעמים להרים את הראש מהמסך ולהריח את האוויר.',
+          female: 'הסמארטפון הוא כמו יד ימין שלך. את מסתדרת מעולה עם כלים דיגיטליים, וחיי היומיום שלך כבר מסונכרנים לענן. רק אל תשכחי לפעמים להרים את הראש מהמסך ולהריח את האוויר.',
+        }
+      },
+      {
+        range: [32, 40],
+        emoji: '🤖',
+        title: 'ציבורג מן העתיד',
+        tagline: 'אם יש AI — למה לחשוב לבד?',
+        color: '#FFD700',
+        desc: {
+          male:   'אתה חי בשכבת הממשק הדיגיטלי-פיזי. כל תהליך אוטומטי, כל מידע בענן, כל החלטה מגובה בנתונים. כנראה שאתה כבר מתכנן לשדרג לגרסה 2.0 עם ממשק ישיר למוח.',
+          female: 'את חיה בשכבת הממשק הדיגיטלי-פיזי. כל תהליך אוטומטי, כל מידע בענן, כל החלטה מגובה בנתונים. כנראה שאת כבר מתכננת לשדרג לגרסה 2.0 עם ממשק ישיר למוח.',
+        }
+      },
+    ];
+
+    // ════ STATE ════
+    let selectedGender = null;
+    let currentQ = 0;
+    let answers = new Array(QUESTIONS.length).fill(null);
+    let lastResultTitle = ''; // for WhatsApp share
+
+    // ════ INTRO ════
+    function selectGender(g) {
+      selectedGender = g;
+      document.getElementById('btnMale').classList.toggle('active', g === 'male');
+      document.getElementById('btnFemale').classList.toggle('active', g === 'female');
+    }
+
+    function resetForm() {
+      document.getElementById('ageInput').value = '';
+      selectedGender = null;
+      document.getElementById('btnMale').classList.remove('active');
+      document.getElementById('btnFemale').classList.remove('active');
+    }
+
+    function startQuiz() {
+      const age = parseInt(document.getElementById('ageInput').value, 10);
+      if (!age || age < 1 || age > 120) { shakeEl(document.getElementById('ageInput')); return; }
+      if (!selectedGender) { shakeEl(document.querySelector('.gender-buttons')); return; }
+      currentQ = 0;
+      answers.fill(null);
+      showScreen('screenQuiz');
+      renderQuestion();
+    }
+
+    function shakeEl(el) {
+      el.style.animation = 'none';
+      el.style.borderColor = '#e74c3c';
+      void el.offsetWidth; // reflow
+      el.style.animation = 'shake 0.45s ease';
+      setTimeout(() => { el.style.borderColor = ''; el.style.animation = ''; }, 800);
+    }
+
+    // ════ QUIZ ════
+    function renderQuestion() {
+      const q = QUESTIONS[currentQ];
+      const total = QUESTIONS.length;
+
+      document.getElementById('qCounter').textContent = `שאלה ${currentQ + 1} מתוך ${total}`;
+      document.getElementById('qPct').textContent     = `${Math.round((currentQ / total) * 100)}%`;
+      document.getElementById('progressFill').style.width = `${(currentQ / total) * 100}%`;
+      document.getElementById('qIcon').textContent = q.icon;
+      document.getElementById('qText').textContent = q.text;
+
+      const wrap = document.getElementById('optionsWrap');
+      wrap.innerHTML = '';
+      q.options.forEach(opt => {
+        const btn = document.createElement('button');
+        btn.className = 'option-btn' + (answers[currentQ] === opt.score ? ' selected' : '');
+        btn.dataset.s = opt.score;
+        btn.innerHTML = `<div class="opt-score" data-s="${opt.score}">${scoreEmoji(opt.score)}</div><span>${opt.text}</span>`;
+        btn.onclick = () => selectAnswer(opt.score, btn);
+        wrap.appendChild(btn);
+      });
+
+      document.getElementById('btnBack').style.visibility = currentQ === 0 ? 'hidden' : 'visible';
+      const isLast = currentQ === total - 1;
+      const nextBtn = document.getElementById('btnNext');
+      nextBtn.textContent = isLast ? 'סיים ✓' : 'המשך →';
+      nextBtn.disabled = answers[currentQ] === null;
+      updateSpectrum();
+    }
+
+    function scoreEmoji(s) { return ['📻','📺','💻','🤖'][s - 1]; }
+
+    function selectAnswer(score, clickedBtn) {
+      answers[currentQ] = score;
+      document.querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
+      clickedBtn.classList.add('selected');
+      document.getElementById('btnNext').disabled = false;
+      updateSpectrum();
+    }
+
+    function updateSpectrum() {
+      const answered = answers.filter(a => a !== null);
+      if (!answered.length) { document.getElementById('specThumb').style.left = '50%'; return; }
+      const avg = answered.reduce((a,b) => a+b, 0) / answered.length;
+      // RTL: digital label is on physical-left, analog on physical-right.
+      // Score 1 (analog) → left:100%, Score 4 (digital) → left:0%
+      document.getElementById('specThumb').style.left = (100 - (avg - 1) / 3 * 100) + '%';
+    }
+
+    function nextQuestion() {
+      if (answers[currentQ] === null) return;
+      if (currentQ < QUESTIONS.length - 1) { currentQ++; renderQuestion(); }
+      else showResults();
+    }
+
+    function prevQuestion() { if (currentQ > 0) { currentQ--; renderQuestion(); } }
+
+    // ════ RESULTS ════
+    function showResults() {
+      const total = answers.reduce((a,b) => a+b, 0);
+      const age   = parseInt(document.getElementById('ageInput').value, 10);
+      const min   = QUESTIONS.length, max = QUESTIONS.length * 4;
+      const pct   = Math.round(((total - min) / (max - min)) * 100);
+
+      // Profile
+      const profile = PROFILES.find(p => total >= p.range[0] && total <= p.range[1]);
+      const gKey    = selectedGender === 'male' ? 'male' : 'female';
+
+      // Store for share
+      lastResultTitle = profile.emoji + ' ' + profile.title;
+
+      // Fill elements
+      const emojiEl = document.getElementById('resEmoji');
+      const titleEl = document.getElementById('resTitle');
+      emojiEl.textContent = profile.emoji;
+      titleEl.textContent = profile.title;
+      titleEl.style.color = profile.color;
+      document.getElementById('resTagline').textContent = profile.tagline;
+      document.getElementById('resDesc').textContent    = profile.desc[gKey];
+
+      // Personal comment
+      const comment = getPersonalComment(age, selectedGender, total);
+      const chipEl  = document.getElementById('resPersonal');
+      if (comment) { chipEl.textContent = comment; chipEl.style.display = 'block'; }
+      else          { chipEl.style.display = 'none'; }
+
+      // Breakdown grid
+      const grid = document.getElementById('breakdownGrid');
+      grid.innerHTML = '';
+      QUESTIONS.forEach((q, i) => {
+        const s   = answers[i];
+        const cell = document.createElement('div');
+        cell.className = 'bd-cell';
+        cell.innerHTML = `<div class="bd-icon">${q.icon}</div><div class="bd-score" data-s="${s}">${scoreEmoji(s)}</div>`;
+        grid.appendChild(cell);
+      });
+
+      // Switch screen first, then animate
+      showScreen('screenResult');
+
+      // Re-trigger emoji animation
+      emojiEl.style.animation = 'none';
+      void emojiEl.offsetWidth;
+      emojiEl.style.animation = 'bounceIn 0.7s cubic-bezier(0.175, 0.885, 0.32, 1.275) both';
+
+      // Animate score counter
+      animateCounter(0, total, 900, document.getElementById('scoreDisplay'));
+
+      // Animate spectrum — invert for RTL (digital=left, analog=right)
+      setTimeout(() => {
+        document.getElementById('resPctLabel').textContent = pct + '% דיגיטלי';
+        document.getElementById('resSpecThumb').style.left = (100 - pct) + '%';
+      }, 120);
+    }
+
+    function getPersonalComment(age, gender, total) {
+      const m = gender === 'male';
+      if (age < 18 && total >= 32)
+        return `🔥 בגיל ${age} כבר ציבורג? נולד${m ? 'ת' : 'ת'} עם אייפון ביד ממש 📱`;
+      if (age < 18 && total <= 17)
+        return `👴 בגיל ${age} עדיין אנלוג${m ? 'י' : 'ית'}? יש לך עתיד בפוליטיקה`;
+      if (age >= 65 && total >= 28)
+        return `🌟 מגיל הזהב לעידן הדיגיטל — ${m ? 'מרשים' : 'מרשימה'} ממש!`;
+      if (age >= 65 && total <= 20)
+        return `🦕 שות${m ? 'ף' : 'פת'} ביטוח לאומי לדינוזאורים האנלוגיים`;
+      if (age >= 40 && total >= 33)
+        return `🚀 מגיל X שעב${m ? 'ר' : 'רה'} את כל השלבים ונח${m ? 'ת' : 'תה'} בדיגיטל המלא`;
+      if (age < 30 && total <= 18)
+        return `🐟 מילניאל${m ? '' : 'ית'} אנלוג${m ? 'י' : 'ית'} — ${m ? 'אמיץ' : 'אמיצה'} לשחות נגד הזרם`;
+      return null;
+    }
+
+    function animateCounter(from, to, duration, el) {
+      const start = Date.now();
+      const tick = () => {
+        const p = Math.min((Date.now() - start) / duration, 1);
+        const eased = 1 - Math.pow(1 - p, 3);
+        el.textContent = Math.round(from + (to - from) * eased);
+        if (p < 1) requestAnimationFrame(tick);
+      };
+      requestAnimationFrame(tick);
+    }
+
+    function resetAll() {
+      answers.fill(null);
+      currentQ = 0;
+      lastResultTitle = '';
+      document.getElementById('ageInput').value = '';
+      selectedGender = null;
+      document.getElementById('btnMale').classList.remove('active');
+      document.getElementById('btnFemale').classList.remove('active');
+      showScreen('screenIntro');
+    }
+
+    function shareWhatsApp() {
+      const msg = 'היי! בדקתי את רמת הטכנולוגיה שלי ויצא לי: ' + lastResultTitle +
+                  ' 😄 אתה מוזמן לבדוק את שלך: https://dadi-attas.github.io/techno-logi/';
+      window.open('https://wa.me/?text=' + encodeURIComponent(msg), '_blank');
+    }
+
+    // ════ SCREEN SWITCH ════
+    function showScreen(id) {
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+    }
+
+    // ════ BG ICONS ════
+    const ICONS = ['💻','📱','⌨️','🖥️','📡','🔌','🖨️','💾','📟','🔋','⚙️','🔧','📺','📻','🎙️','🕹️','🤖','⚡','🛰️','📷'];
+    (function() {
+      const c = document.getElementById('bgIcons');
+      for (let i = 0; i < 30; i++) {
+        const el = document.createElement('span');
+        el.className = 'bg-icon';
+        el.textContent = ICONS[Math.floor(Math.random() * ICONS.length)];
+        el.style.top              = Math.random() * 100 + '%';
+        el.style.right            = Math.random() * 100 + '%';
+        el.style.animationDelay   = (Math.random() * 7) + 's';
+        el.style.animationDuration= (6 + Math.random() * 9) + 's';
+        el.style.fontSize         = (13 + Math.random() * 24) + 'px';
+        c.appendChild(el);
+      }
+    })();
+  </script>
+</body>
+</html>
